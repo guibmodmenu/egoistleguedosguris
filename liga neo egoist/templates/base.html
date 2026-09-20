@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#07080b">
+  <title>{% block title %}NEO EGOIST LEAGUE{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container" style="padding-bottom:0">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="safe-bottom">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block bottom_nav %}
+  <nav class="bottom-nav">
+    <ul class="nav-items">
+      <li class="nav-item {% if request.endpoint == 'player.dashboard' %}active{% endif %}">
+        <a href="{{ url_for('player.dashboard') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+          <span>Home</span>
+        </a>
+      </li>
+      <li class="nav-item {% if request.endpoint == 'player.rank' %}active{% endif %}">
+        <a href="{{ url_for('player.rank') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2Z"/></svg>
+          <span>Rank</span>
+        </a>
+      </li>
+      <li class="nav-item {% if request.endpoint == 'player.matches' %}active{% endif %}">
+        <a href="{{ url_for('player.matches') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 000 20 14.5 14.5 0 000-20"/><path d="M2 12h20"/></svg>
+          <span>Jogos</span>
+        </a>
+      </li>
+      <li class="nav-item {% if request.endpoint == 'player.market' %}active{% endif %}">
+        <a href="{{ url_for('player.market') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          <span>Mercado</span>
+        </a>
+      </li>
+      <li class="nav-item {% if request.endpoint in ('player.profile', 'player.profile_edit', 'player.tasks', 'player.career', 'player.achievements') %}active{% endif %}">
+        <a href="{{ url_for('player.profile') }}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Perfil</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+  {% endblock %}
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

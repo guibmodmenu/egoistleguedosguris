@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+{% block title %}Admin — NEO EGOIST LEAGUE{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <p class="label" style="color:var(--danger)">ADMIN</p>
+      <h1 style="font-size:28px;font-weight:900;margin:4px 0 0">Dashboard</h1>
+    </div>
+    <span class="badge" style="background:rgba(239,68,68,0.15);color:var(--danger);padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700">ADMIN</span>
+  </div>
+
+  {% if active_season %}
+    <p class="text-sm mb-4" style="color:var(--text-dim)">Temporada: {{ active_season.name }}</p>
+  {% endif %}
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="label">Jogadores</div><div class="value">{{ stats.players }}</div></div>
+    <div class="stat-card"><div class="label">Partidas</div><div class="value">{{ stats.matches }}</div></div>
+    <div class="stat-card"><div class="label">Pendentes</div><div class="value">{{ stats.pending }}</div></div>
+    <div class="stat-card"><div class="label">Finalizadas</div><div class="value">{{ stats.finished }}</div></div>
+  </div>
+
+  <div class="mt-4" style="display:flex;gap:8px">
+    <a href="{{ url_for('admin.match_new') }}" class="btn btn-danger" style="flex:1">+ Registrar partida</a>
+    <a href="{{ url_for('admin.players_list') }}" class="btn btn-ghost" style="flex:1">Jogadores</a>
+  </div>
+
+  {% if recent_matches %}
+    <section class="mt-4">
+      <h2 class="font-bold" style="margin:0 0 12px">Partidas recentes</h2>
+      {% for match in recent_matches %}
+        <a href="{{ url_for('admin.match_detail', match_id=match.id) }}" style="text-decoration:none;color:inherit">
+          <div class="card mb-2" style="padding:14px">
+            <div class="flex justify-between items-center">
+              <span class="font-bold">{{ match.homeClub.short_name if match.homeClub else '?' }} {{ match.home_score }} × {{ match.away_score }} {{ match.awayClub.short_name if match.awayClub else '?' }}</span>
+              <span class="text-xs {% if match.status == 'FINISHED' %}positive{% else %}negative{% endif %}">{{ match.status }}</span>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

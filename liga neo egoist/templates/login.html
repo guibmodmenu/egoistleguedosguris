@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Entrar — NEO EGOIST LEAGUE{% endblock %}
+{% block bottom_nav %}{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <p class="brand">LOGIN PRIVADO</p>
+    <h1>Entrar</h1>
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-group">
+        <input class="form-input" name="username" placeholder="Nickname" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <input class="form-input" type="password" name="password" placeholder="Senha" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary">Entrar</button>
+    </form>
+    <p class="mt-4 text-sm text-center" style="color:var(--text-dim)">
+      A liga é privada e exige convite.
+      <a href="{{ url_for('auth.register') }}">Tenho um convite</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Mercado — NEO EGOIST LEAGUE{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>💰 Mercado</h1>
+  </div>
+
+  {% if players_data %}
+    <div class="card-gradient mb-4">
+      <p class="text-xs" style="color:var(--text-dim)">MAIOR VALOR</p>
+      <div style="font-size:32px;font-weight:900;margin-top:4px;color:var(--accent-light)">
+        ¥{{ "%.1f"|format(players_data[0].season_player.current_market_value / 1000000) }}M
+      </div>
+      <p class="text-sm mt-1" style="color:var(--text-muted)">
+        {{ players_data[0].player.nickname }} · {{ players_data[0].club.name }}
+      </p>
+    </div>
+
+    <p class="text-sm font-bold mb-2" style="color:var(--text-dim)">TODOS OS JOGADORES</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      {% for item in players_data %}
+        <div class="card flex items-center gap-3" style="padding:12px">
+          <span class="rank-number {% if loop.index <= 3 %}top-3{% endif %}">#{{ loop.index }}</span>
+          {% if item.player.avatar_url %}
+            <div class="avatar">
+              <img src="{{ item.player.avatar_url }}" alt="{{ item.player.nickname }}">
+            </div>
+          {% else %}
+            <div class="player-icon">
+              {{ item.player.icon_key[:2] }}
+            </div>
+          {% endif %}
+          <div class="player-info">
+            <div class="name">{{ item.player.nickname }}</div>
+            <div class="meta">{{ item.club.name }}</div>
+          </div>
+          <div class="player-value">
+            <div class="amount">¥{{ "%.1f"|format(item.season_player.current_market_value / 1000000) }}M</div>
+            <div class="ovr">OVR {{ item.season_player.overall|round(0)|int }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="icon">💰</div>
+      <h3>Mercado vazio</h3>
+      <p class="text-sm" style="color:var(--text-dim)">Ainda não há dados de mercado.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

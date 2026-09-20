@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ player.nickname }} — NEO EGOIST LEAGUE{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="card-gradient">
+    <div class="flex items-center gap-4">
+      {% if player.avatar_url %}
+        <div class="avatar-lg">
+          <img src="{{ player.avatar_url }}" alt="{{ player.nickname }}">
+        </div>
+      {% else %}
+        <div class="player-icon large">
+          {{ player.icon_key[:2] }}
+        </div>
+      {% endif %}
+      <div>
+        <h1 style="font-size:22px;font-weight:900;margin:0">{{ player.nickname }}</h1>
+        <p class="text-sm" style="color:var(--text-dim)">{{ player.display_name }}</p>
+        <p class="text-xs" style="color:var(--text-muted)">{{ club.name if club else 'Sem clube' }} · {{ player.position }}</p>
+        {% if player.country_code %}
+          <p class="text-xs" style="color:var(--text-dim)">{{ player.country_code }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if season_player %}
+      <div class="mt-4">
+        <p class="text-xs" style="color:var(--text-dim)">VALOR DE MERCADO</p>
+        <div style="font-size:28px;font-weight:900;margin-top:4px">
+          ¥{{ "%.1f"|format(season_player.current_market_value / 1000000) }}M
+        </div>
+      </div>
+      <div class="stat-grid mt-4">
+        <div class="stat-card"><div class="label">OVR</div><div class="value">{{ season_player.overall|round(0)|int }}</div></div>
+        <div class="stat-card"><div class="label">Partidas</div><div class="value">{{ season_player.matches }}</div></div>
+        <div class="stat-card"><div class="label">Gols</div><div class="value">{{ season_player.goals }}</div></div>
+        <div class="stat-card"><div class="label">Assistências</div><div class="value">{{ season_player.assists }}</div></div>
+        <div class="stat-card"><div class="label">Rating</div><div class="value">{{ "%.1f"|format(season_player.rating_average) }}</div></div>
+        <div class="stat-card"><div class="label">MVP</div><div class="value">{{ season_player.mvp_count }}</div></div>
+        <div class="stat-card"><div class="label">V</div><div class="value">{{ season_player.wins }}</div></div>
+        <div class="stat-card"><div class="label">D / E</div><div class="value">{{ season_player.losses }}/{{ season_player.draws }}</div></div>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if match_history %}
+    <div class="mt-4">
+      <h2 style="font-size:16px;font-weight:700;margin:0 0 12px">Histórico de partidas</h2>
+      {% for item in match_history %}
+        <div class="card mb-2" style="padding:12px">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-sm">{{ item.match.homeClub.short_name if item.match.homeClub else '?' }} {{ item.match.home_score }} × {{ item.match.away_score }} {{ item.match.awayClub.short_name if item.match.awayClub else '?' }}</span>
+            <span class="font-bold text-sm {% if item.stats.rating >= 7 %}positive{% elif item.stats.rating < 5 %}negative{% endif %}">
+              {{ "%.1f"|format(item.stats.rating) }}
+            </span>
+          </div>
+          <p class="text-xs mt-1" style="color:var(--text-dim)">
+            {{ item.stats.minutes }} min
+            {% if item.stats.goals %} · {{ item.stats.goals }}G{% endif %}
+            {% if item.stats.assists %} · {{ item.stats.assists }}A{% endif %}
+            {% if item.stats.tackles %} · {{ item.stats.tackles }}D{% endif %}
+          </p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{{ url_for('player.rank') }}" class="btn btn-ghost">← Voltar ao ranking</a>
+  </div>
+</div>
+{% endblock %}
