@@ -1,0 +1,135 @@
+{% extends "admin/base.html" %}
+{% block title %}Registrar partida — Admin{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <p class="label" style="color:var(--danger)">ADMIN / PARTIDA</p>
+    <h1>Registrar partida</h1>
+  </div>
+  <form method="POST" id="matchForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="form-group">
+      <label>Temporada</label>
+      <input class="form-input" value="{{ active_season.name if active_season else 'Nenhuma' }}" disabled>
+    </div>
+    <div class="form-group">
+      <label>Data e hora</label>
+      <input class="form-input" type="datetime-local" name="scheduled_at" required>
+    </div>
+    <div class="form-group">
+      <label>Clube A (Casa)</label>
+      <select class="form-input" name="home_club_id" required id="homeClub" onchange="loadPlayers()">
+        <option value="">Selecionar...</option>
+        {% for club in clubs %}
+          <option value="{{ club.id }}">{{ club.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Clube B (Fora)</label>
+      <select class="form-input" name="away_club_id" required id="awayClub" onchange="loadPlayers()">
+        <option value="">Selecionar...</option>
+        {% for club in clubs %}
+          <option value="{{ club.id }}">{{ club.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Placar</label>
+      <div class="score-grid">
+        <input class="score-input" type="number" name="home_score" min="0" max="99" value="0" required>
+        <span class="score-divider">×</span>
+        <input class="score-input" type="number" name="away_score" min="0" max="99" value="0" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Observações</label>
+      <textarea class="form-input" name="notes" rows="2" style="min-height:auto;padding:12px 16px" placeholder="Opcional"></textarea>
+    </div>
+    <div class="divider"></div>
+    <h2 style="font-size:18px;font-weight:800;margin:0 0 16px">Jogadores participantes</h2>
+    <p class="text-sm mb-4" style="color:var(--text-dim)">Selecione os clubes acima para ver os jogadores.</p>
+    <div id="playersContainer">
+      <p class="text-sm" style="color:var(--text-dim)">Aguardando seleção dos clubes...</p>
+    </div>
+    <div class="divider"></div>
+    <button type="submit" class="btn btn-danger btn-block mt-2">FINALIZAR PARTIDA</button>
+    <div class="mt-2">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost btn-block">← Cancelar</a>
+    </div>
+  </form>
+</div>
+<script>
+var allPlayers = {};
+function loadPlayers() {
+  var homeId = document.getElementById('homeClub').value;
+  var awayId = document.getElementById('awayClub').value;
+  var container = document.getElementById('playersContainer');
+  if (!homeId && !awayId) {
+    container.innerHTML = '<p class="text-sm" style="color:var(--text-dim)">Selecione os clubes acima.</p>';
+    return;
+  }
+  var clubIds = [homeId, awayId].filter(function(id){ return id; });
+  var players = [];
+  var done = 0;
+  clubIds.forEach(function(cid) {
+    fetch('/admin/api/players/' + cid).then(function(r){ return r.json(); }).then(function(list) {
+      players = players.concat(list);
+      done++;
+      if (done === clubIds.length) renderPlayers(players);
+    });
+  });
+}
+function renderPlayers(players) {
+  var c = document.getElementById('playersContainer');
+  if (!players.length) {
+    c.innerHTML = '<p class="text-sm" style="color:var(--text-dim)">Nenhum jogador encontrado nestes clubes na temporada ativa.</p>';
+    return;
+  }
+  var h = '';
+  players.forEach(function(p) {
+    var icon = (p.icon_key || 'zap').substring(0,2);
+    h += '<div class="player-card mb-2">';
+    h += '<div class="player-card-header" onclick="togglePlayerCard(this)">';
+    h += '<div class="player-icon" style="border-color:var(--accent)">' + icon + '</div>';
+    h += '<div class="player-info"><div class="name">' + p.nickname + '</div>';
+    h += '<div class="meta">' + p.position + ' · ' + p.club + '</div></div>';
+    h += '<span style="color:var(--text-dim)">⌄</span></div>';
+    h += '<div class="player-card-body">';
+    h += '<input type="hidden" name="player_ids" value="' + p.id + '">';
+    h += '<div class="form-group"><label>Minutos</label>';
+    h += '<input class="form-input" type="number" name="minutes_' + p.id + '" min="0" max="120" value="90"></div>';
+    h += '<div class="detail-grid">';
+    h += statField('goals', p.id, 'Gols');
+    h += statField('assists', p.id, 'Assistências');
+    h += statField('shots', p.id, 'Finalizações');
+    h += statField('shots_on_target', p.id, 'No alvo');
+    h += statField('passes', p.id, 'Passes');
+    h += statField('accurate_passes', p.id, 'Passes certos');
+    h += statField('chances_created', p.id, 'Chances');
+    h += statField('tackles', p.id, 'Desarmes');
+    h += statField('interceptions', p.id, 'Interceptações');
+    h += statField('clearances', p.id, 'Cortes');
+    h += statField('blocks', p.id, 'Bloqueios');
+    h += statField('saves', p.id, 'Defesas');
+    h += statField('goals_conceded', p.id, 'Gols sofridos');
+    h += '</div>';
+    h += '<div class="detail-grid" style="margin-top:8px">';
+    h += statField('yellow_cards', p.id, 'Cartão amarelo');
+    h += statField('red_cards', p.id, 'Cartão vermelho');
+    h += '</div>';
+    h += '<div class="form-group mt-2">';
+    h += '<label style="display:flex;align-items:center;gap:8px;cursor:pointer">';
+    h += '<input type="checkbox" name="mvp_' + p.id + '"> MVP</label></div>';
+    h += '<div class="form-group"><label>Rating (0-10)</label>';
+    h += '<input class="form-input" type="number" name="rating_' + p.id + '" min="0" max="10" step="0.1" value="6.0"></div>';
+    h += '</div></div>';
+  });
+  c.innerHTML = h;
+}
+function statField(name, pid, label) {
+  return '<div class="item"><label class="label">' + label + '</label>' +
+    '<input class="form-input" type="number" name="' + name + '_' + pid + '" min="0" value="0" style="min-height:40px;font-size:16px;font-weight:700;text-align:center"></div>';
+}
+</script>
+{% endblock %}

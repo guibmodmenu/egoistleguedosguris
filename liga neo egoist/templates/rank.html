@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Ranking — NEO EGOIST LEAGUE{% endblock %}
+{% block content %}
+<div class="container rank-page">
+  <div class="page-header">
+    <p class="label">COMPETIÇÃO · NEO EGOIST LEAGUE</p>
+    <h1>Ranking de valores</h1>
+  </div>
+
+  {% if active_season %}
+    <p class="text-sm mb-2 rank-season-name">{{ active_season.name }}</p>
+  {% endif %}
+
+  <div class="tab-bar rank-sort-tabs" aria-label="Ordenar ranking">
+    <a href="{{ url_for('player.rank', sort='value') }}" class="tab {% if sort_by == 'value' %}active{% endif %}">VALOR</a>
+    <a href="{{ url_for('player.rank', sort='goals') }}" class="tab {% if sort_by == 'goals' %}active{% endif %}">GOLS</a>
+    <a href="{{ url_for('player.rank', sort='assists') }}" class="tab {% if sort_by == 'assists' %}active{% endif %}">ASSISTÊNCIAS</a>
+    <a href="{{ url_for('player.rank', sort='rating') }}" class="tab {% if sort_by == 'rating' %}active{% endif %}">RATING</a>
+  </div>
+
+  {% if players_data %}
+    <section class="rank-list" aria-label="Ranking dos jogadores">
+      {% for item in players_data %}
+        <article class="rank-card{% if loop.index <= 3 %} rank-top-{{ loop.index }}{% endif %}{% if item.value_change and item.value_change.change %} has-trend{% endif %}">
+          <div class="rank-panel" aria-label="Posição {{ loop.index }}">
+            <span class="rank-caption">NEO<br>RANK</span>
+            <strong class="rank-number">{{ loop.index }}</strong>
+          </div>
+
+          <div class="rank-bid-tag">BID</div>
+
+          <div class="rank-player-copy">
+            <a class="rank-player-name" href="{{ url_for('player.player_profile', player_id=item.player.id) }}">
+              {{ item.player.nickname }}
+            </a>
+            <span class="rank-player-meta">{{ item.club.name }} · {{ item.player.position }}</span>
+          </div>
+
+          <div class="rank-price-panel" aria-label="Valor de mercado ¥{{ item.season_player.current_market_value }}">
+            <span class="rank-price-label">VALOR DE MERCADO</span>
+            <strong class="rank-price"><span>¥</span>{{ "%.1f"|format(item.season_player.current_market_value / 1000000) }}<small>M</small></strong>
+            <span class="rank-player-stats">OVR {{ item.season_player.overall|round(0)|int }} · J {{ item.season_player.matches }} · G {{ item.season_player.goals }} · A {{ item.season_player.assists }} · R {{ "%.1f"|format(item.season_player.rating_average) }}</span>
+          </div>
+
+          <a class="rank-portrait-frame" href="{{ url_for('player.player_profile', player_id=item.player.id) }}" aria-label="Abrir perfil de {{ item.player.nickname }}">
+            {% if item.player.avatar_url %}
+              <img src="{{ item.player.avatar_url }}" alt="Retrato de {{ item.player.nickname }}" loading="lazy">
+            {% else %}
+              <span class="rank-portrait-fallback">{{ item.player.icon_key[:2] }}</span>
+            {% endif %}
+          </a>
+
+          {% if item.value_change and item.value_change.change > 0 %}
+            <div class="rank-trend is-up" aria-label="Valor aumentou {{ '%.2f'|format(item.value_change.change / 1000000) }} milhões">
+              <span class="rank-trend-label">UP</span>
+              <span class="rank-trend-arrow" aria-hidden="true"></span>
+              <strong>¥{{ "%.2f"|format(item.value_change.change / 1000000) }}M</strong>
+              {% if item.value_change.change_percent %}<small>{{ "%+.2f"|format(item.value_change.change_percent) }}%</small>{% endif %}
+            </div>
+          {% elif item.value_change and item.value_change.change < 0 %}
+            <div class="rank-trend is-down" aria-label="Valor diminuiu {{ '%.2f'|format((item.value_change.change|abs) / 1000000) }} milhões">
+              <span class="rank-trend-label">DOWN</span>
+              <span class="rank-trend-arrow" aria-hidden="true"></span>
+              <strong>¥{{ "%.2f"|format((item.value_change.change|abs) / 1000000) }}M</strong>
+              {% if item.value_change.change_percent %}<small>{{ "%+.2f"|format(item.value_change.change_percent) }}%</small>{% endif %}
+            </div>
+          {% else %}
+            <div class="rank-trend empty" aria-hidden="true"></div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </section>
+    <p class="rank-list-hint">Toque no nome ou no retrato para abrir o perfil completo. As setas mostram a última alteração de valor.</p>
+  {% else %}
+    <div class="empty-state">
+      <div class="icon">🏆</div>
+      <h3>Nenhum jogador</h3>
+      <p class="text-sm" style="color:var(--text-dim)">Ainda não há jogadores na temporada.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

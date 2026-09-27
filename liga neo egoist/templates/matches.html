@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Jogos — NEO EGOIST LEAGUE{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>⚽ Jogos</h1>
+  </div>
+
+  {% if active_season %}
+    <p class="text-sm mb-4" style="color:var(--text-dim)">{{ active_season.name }}</p>
+  {% endif %}
+
+  {% for match in matches_list %}
+    <a href="{{ url_for('player.match_detail', match_id=match.id) }}" style="text-decoration:none;color:inherit">
+      <div class="match-card">
+        <div class="status">{{ match.status }}</div>
+        <div class="teams mt-2">
+          <div class="team">{{ match.homeClub.short_name if match.homeClub else '?' }}</div>
+          <div class="score">{{ match.home_score }} × {{ match.away_score }}</div>
+          <div class="team">{{ match.awayClub.short_name if match.awayClub else '?' }}</div>
+        </div>
+        {% if match.scheduled_at %}
+          <p class="text-xs text-center mt-2" style="color:var(--text-dim)">{{ match.scheduled_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}
+
+  {% if not matches_list %}
+    <div class="empty-state">
+      <div class="icon">⚽</div>
+      <h3>Nenhuma partida</h3>
+      <p class="text-sm" style="color:var(--text-dim)">Ainda não há partidas registradas.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "admin/base.html" %}
+{% block title %}Mudar valor do jogador — Admin{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <p class="label" style="color:var(--danger)">ADMIN / RANKING</p>
+    <h1>Mudar valor do jogador</h1>
+  </div>
+
+  {% if active_season %}
+    <p class="text-sm mb-4" style="color:var(--text-dim)">{{ active_season.name }} · escolha o jogador e registre o que ele fez.</p>
+  {% else %}
+    <div class="flash flash-warning">Não há uma temporada ativa no momento.</div>
+  {% endif %}
+
+  <form method="POST" class="card" style="padding:18px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="form-group">
+      <label for="season_player_id">Jogador</label>
+      <select id="season_player_id" name="season_player_id" class="form-input" required {% if not active_season or not players_data %}disabled{% endif %}>
+        <option value="">Selecione um jogador</option>
+        {% for item in players_data %}
+          <option value="{{ item.season_player.id }}">{{ item.player.nickname }}{% if item.club %} · {{ item.club.name }}{% endif %} · ¥{{ "%.1f"|format(item.season_player.current_market_value / 1000000) }}M</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="action">O que o jogador fez?</label>
+      <select id="action" name="action" class="form-input" required {% if not active_season %}disabled{% endif %}>
+        <option value="">Selecione a ação</option>
+        <option value="goal">Gol</option>
+        <option value="assist">Assistência</option>
+        <option value="tackle">Desarme</option>
+        <option value="save">Defesa</option>
+        <option value="manual_loss">Perda manual de valor</option>
+      </select>
+    </div>
+
+    <div class="form-group" id="quantity-group">
+      <label for="quantity">Quantidade</label>
+      <input id="quantity" name="quantity" type="number" min="1" max="100" value="1" class="form-input" required {% if not active_season %}disabled{% endif %}>
+    </div>
+
+    <div class="form-group" id="loss-amount-group" hidden>
+      <label for="loss_amount">Valor que será descontado (¥)</label>
+      <input id="loss_amount" name="loss_amount" type="number" min="1" step="1000" value="1000000" class="form-input" {% if not active_season %}disabled{% endif %}>
+      <p class="text-xs mt-1" style="color:var(--text-dim)">O admin define o valor da perda. O saldo do jogador nunca fica abaixo de ¥0.</p>
+    </div>
+
+    <div class="card" style="padding:12px;margin:4px 0 16px;background:rgba(59,130,246,0.08)">
+      <p class="text-xs" style="color:var(--text-muted);margin:0 0 6px">Impacto automático: gol +4,32%, assistência +2,88%, desarme +0,38% e defesa +0,45%. Para diminuir, escolha “Perda manual de valor” e informe o valor em ¥.</p>
+      <p class="text-xs" style="color:var(--text-muted);margin:0">Gol e assistência também atualizam as estatísticas exibidas no ranking. Cada alteração fica registrada no histórico e aparece com seta de alta ou queda.</p>
+    </div>
+
+    <button type="submit" class="btn btn-danger btn-block" {% if not active_season or not players_data %}disabled{% endif %}>Aplicar mudança</button>
+  </form>
+
+  {% if not players_data and active_season %}
+    <div class="empty-state">
+      <div class="icon">👥</div>
+      <h3>Nenhum jogador na temporada</h3>
+      <p class="text-sm" style="color:var(--text-dim)">Adicione jogadores à temporada antes de registrar uma ação.</p>
+    </div>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost btn-block">← Voltar ao painel</a>
+  </div>
+</div>
+
+<script>
+(function() {
+  var action = document.getElementById('action');
+  var quantityGroup = document.getElementById('quantity-group');
+  var quantity = document.getElementById('quantity');
+  var lossGroup = document.getElementById('loss-amount-group');
+  var lossAmount = document.getElementById('loss_amount');
+
+  function syncValueInputs() {
+    var isLoss = action.value === 'manual_loss';
+    quantityGroup.hidden = isLoss;
+    quantity.disabled = isLoss || action.disabled;
+    quantity.required = !isLoss;
+    lossGroup.hidden = !isLoss;
+    lossAmount.disabled = !isLoss || action.disabled;
+    lossAmount.required = isLoss;
+  }
+
+  action.addEventListener('change', syncValueInputs);
+  syncValueInputs();
+})();
+</script>
+{% endblock %}
