@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 sys.path.insert(0, os.path.dirname(__file__))
 
 from app import create_app
-from models import db, Country, Club, Season, SeasonClub, User, Player
+from models import db, Country, Club, Season, SeasonClub, User, Player, DEFAULT_INITIAL_MARKET_VALUE
 from werkzeug.security import generate_password_hash
 
 
@@ -74,7 +74,7 @@ def seed():
             start_date=now - timedelta(days=30),
             end_date=now + timedelta(days=150),
             status='ACTIVE',
-            initial_market_value=50000000,
+            initial_market_value=DEFAULT_INITIAL_MARKET_VALUE,
         )
         db.session.add(season)
         db.session.flush()

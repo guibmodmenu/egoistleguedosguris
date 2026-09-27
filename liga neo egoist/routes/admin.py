@@ -2,11 +2,11 @@ import uuid
 import os
 from flask import Blueprint, render_template, redirect, url_for, session, flash, request, jsonify
 from werkzeug.utils import secure_filename
-from models import db, User, Player, Season, SeasonPlayer, SeasonClub, Club, Match, MatchPlayer, Invite
+from models import db, User, Player, Season, SeasonPlayer, SeasonPlayerAttributes, SeasonClub, Club, Match, MatchPlayer, Invite, PlayerValueHistory
 from decorators import admin_required
 from werkzeug.security import generate_password_hash
 from datetime import datetime, timezone
-from config import MAX_UPLOAD_SIZE, ALLOWED_EXTENSIONS
+from config import MAX_UPLOAD_SIZE, ALLOWED_EXTENSIONS, MAX_MARKET_INCREASE
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static', 'uploads')
 
@@ -231,9 +231,178 @@ def players_list():
             player = db.session.get(Player, sp.player_id)
             club = db.session.get(Club, sp.club_id)
             if player:
-                players_data.append({'player': player, 'season_player': sp, 'club': club})
+                attribute_record = SeasonPlayerAttributes.query.filter_by(
+                    season_player_id=sp.id
+                ).first()
+                default_attribute = max(0, min(100, int(round(sp.overall))))
+                attribute_values = {
+                    'defense': attribute_record.defense if attribute_record else default_attribute,
+                    'passing': attribute_record.passing if attribute_record else default_attribute,
+                    'physical': attribute_record.physical if attribute_record else default_attribute,
+                    'speed': attribute_record.speed if attribute_record else default_attribute,
+                    'attack': attribute_record.attack if attribute_record else default_attribute,
+                }
+                players_data.append({
+                    'player': player, 'season_player': sp, 'club': club,
+                    'attribute_values': attribute_values,
+                })
         players_data.sort(key=lambda x: x['season_player'].current_market_value, reverse=True)
     return render_template('admin/players.html', players_data=players_data, active_season=active_season)
+
+
+@admin_bp.route('/players/<int:season_player_id>/overall', methods=['POST'])
+@admin_required
+def player_update_overall(season_player_id):
+    active_season = Season.query.filter_by(status='ACTIVE').first()
+    if not active_season:
+        flash('Não há uma temporada ativa para atualizar o overall.', 'error')
+        return redirect(url_for('admin.players_list'))
+
+    season_player = SeasonPlayer.query.filter_by(
+        id=season_player_id, season_id=active_season.id
+    ).first()
+    if not season_player:
+        flash('Jogador não encontrado na temporada ativa.', 'error')
+        return redirect(url_for('admin.players_list'))
+
+    stat_names = ('defense', 'passing', 'physical', 'speed', 'attack')
+    attribute_values = {}
+    for name in stat_names:
+        value = request.form.get(name, type=int)
+        if value is None or not 0 <= value <= 100:
+            flash('Cada atributo deve estar entre 0 e 100.', 'error')
+            return redirect(url_for('admin.players_list'))
+        attribute_values[name] = value
+
+    attribute_record = SeasonPlayerAttributes.query.filter_by(
+        season_player_id=season_player.id
+    ).first()
+    if not attribute_record:
+        attribute_record = SeasonPlayerAttributes(season_player_id=season_player.id)
+        db.session.add(attribute_record)
+
+    for name, value in attribute_values.items():
+        setattr(attribute_record, name, value)
+
+    season_player.overall = round(sum(attribute_values.values()) / len(stat_names))
+    db.session.commit()
+
+    player = db.session.get(Player, season_player.player_id)
+    flash(f'Overall de {player.nickname if player else "jogador"} atualizado para {int(season_player.overall)}.', 'success')
+    return redirect(url_for('admin.players_list'))
+
+
+@admin_bp.route('/players/value', methods=['GET', 'POST'])
+@admin_required
+def player_value_change():
+    active_season = Season.query.filter_by(status='ACTIVE').first()
+    actions = {
+        'goal': {
+            'label': 'gol',
+            'plural': 'gols',
+            'stat': 'goals',
+            'percent': (0.55 * 1.8 + 0.25 * 1.8) * 3,
+        },
+        'assist': {
+            'label': 'assistência',
+            'plural': 'assistências',
+            'stat': 'assists',
+            'percent': (0.55 * 1.2 + 0.25 * 1.2) * 3,
+        },
+        'tackle': {
+            'label': 'desarme',
+            'plural': 'desarmes',
+            'stat': None,
+            'percent': (0.55 * 0.15 + 0.15 * 0.18) * 3,
+        },
+        'save': {
+            'label': 'defesa',
+            'plural': 'defesas',
+            'stat': None,
+            'percent': (0.55 * 0.18 + 0.15 * 0.2) * 3,
+        },
+        'manual_loss': {
+            'label': 'perda manual de valor',
+            'plural': 'perda manual de valor',
+            'stat': None,
+            'mode': 'manual_loss',
+        },
+    }
+
+    if request.method == 'POST':
+        if not active_season:
+            flash('Não há temporada ativa para alterar valores.', 'error')
+            return redirect(url_for('admin.dashboard'))
+
+        season_player_id = request.form.get('season_player_id', type=int)
+        quantity = request.form.get('quantity', 1, type=int)
+        action = actions.get(request.form.get('action', ''))
+        season_player = SeasonPlayer.query.filter_by(
+            id=season_player_id, season_id=active_season.id
+        ).first()
+
+        if not season_player or not action:
+            flash('Selecione um jogador e uma ação válidos.', 'error')
+            return redirect(url_for('admin.player_value_change'))
+
+        player = db.session.get(Player, season_player.player_id)
+        previous_value = int(season_player.current_market_value)
+
+        if action.get('mode') == 'manual_loss':
+            loss_amount = request.form.get('loss_amount', type=int)
+            if not loss_amount or loss_amount <= 0 or previous_value <= 0:
+                flash('Informe uma perda positiva; o valor atual do jogador precisa ser maior que zero.', 'error')
+                return redirect(url_for('admin.player_value_change'))
+            change_amount = -min(loss_amount, previous_value)
+            new_value = previous_value + change_amount
+            change_percent = round(change_amount * 100 / previous_value, 2)
+            action_text = f"perda manual de ¥{abs(change_amount):,}"
+            result_message = (
+                f"Valor de {player.nickname if player else 'jogador'} reduzido em "
+                f"¥{abs(change_amount):,} para ¥{new_value:,}."
+            )
+        else:
+            if not quantity or not 1 <= quantity <= 100:
+                flash('Informe uma quantidade de 1 a 100.', 'error')
+                return redirect(url_for('admin.player_value_change'))
+            change_percent = min(MAX_MARKET_INCREASE, round(action['percent'] * quantity, 2))
+            change_amount = int(previous_value * change_percent / 100)
+            new_value = max(0, previous_value + change_amount)
+            action_text = action['label'] if quantity == 1 else action['plural']
+            result_message = (
+                f"Ação registrada: {quantity} {action_text} para "
+                f"{player.nickname if player else 'Jogador'}. Novo valor ¥{new_value:,}."
+            )
+
+        if action['stat']:
+            setattr(season_player, action['stat'], getattr(season_player, action['stat']) + quantity)
+
+        season_player.current_market_value = new_value
+        db.session.add(PlayerValueHistory(
+            season_player_id=season_player.id,
+            previous_value=previous_value,
+            change=change_amount,
+            change_percent=change_percent,
+            new_value=new_value,
+            reason=f"Ação manual: {quantity} {action_text}",
+            source='ADMIN',
+        ))
+        db.session.commit()
+
+        flash(result_message, 'success')
+        return redirect(url_for('admin.player_value_change'))
+
+    players_data = []
+    if active_season:
+        for sp in SeasonPlayer.query.filter_by(season_id=active_season.id).all():
+            player = db.session.get(Player, sp.player_id)
+            club = db.session.get(Club, sp.club_id)
+            if player:
+                players_data.append({'player': player, 'season_player': sp, 'club': club})
+        players_data.sort(key=lambda item: item['player'].nickname.lower())
+
+    return render_template('admin/player_value.html', players_data=players_data,
+                           active_season=active_season)
 
 
 @admin_bp.route('/players/<int:player_id>/icon', methods=['POST'])

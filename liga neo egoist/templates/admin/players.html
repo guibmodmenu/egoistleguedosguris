@@ -36,6 +36,35 @@
 
         <div class="divider" style="margin:14px 0"></div>
 
+        <p class="text-xs font-bold mb-2" style="color:var(--text-dim)">OVERALL · EDITOR DE ATRIBUTOS</p>
+        <form method="POST" action="{{ url_for('admin.player_update_overall', season_player_id=item.season_player.id) }}" class="overall-editor" data-overall-editor>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="overall-editor-grid">
+            <div class="overall-radar-wrap">
+              <svg class="overall-radar" viewBox="0 0 420 420" role="img" aria-label="Pentágono de atributos de {{ item.player.nickname }}"></svg>
+            </div>
+            <div class="overall-controls">
+              {% set pentagon_stats = [('defense', 'DEFESA'), ('passing', 'PASSE'), ('physical', 'FÍSICO'), ('speed', 'VELOCIDADE'), ('attack', 'ATAQUE')] %}
+              {% for stat in pentagon_stats %}
+                <div class="overall-stat">
+                  <div class="overall-stat-header">
+                    <label for="{{ stat[0] }}-{{ item.season_player.id }}">{{ stat[1] }}</label>
+                    <strong data-stat-value="{{ stat[0] }}">{{ item.attribute_values[stat[0]] }}</strong>
+                  </div>
+                  <input id="{{ stat[0] }}-{{ item.season_player.id }}" type="range" name="{{ stat[0] }}" min="0" max="100" value="{{ item.attribute_values[stat[0]] }}" data-attribute="{{ stat[0] }}" data-label="{{ stat[1] }}">
+                </div>
+              {% endfor %}
+              <div class="overall-result">
+                <span>OVERALL</span>
+                <strong data-overall-value>{{ item.season_player.overall|round(0)|int }}</strong>
+              </div>
+              <button type="submit" class="btn btn-danger btn-block overall-save">Salvar overall</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="divider" style="margin:14px 0"></div>
+
         <p class="text-xs font-bold mb-2" style="color:var(--text-dim)">FOTO DO JOGADOR</p>
 
         <div style="display:flex;flex-direction:column;gap:8px">
@@ -117,6 +146,77 @@ document.querySelectorAll('input[name="icon_key"]').forEach(function(radio) {
     });
     this.nextElementSibling.style.borderColor = 'var(--accent)';
   });
+});
+
+document.querySelectorAll('[data-overall-editor]').forEach(function(form) {
+  var svg = form.querySelector('.overall-radar');
+  var inputs = Array.from(form.querySelectorAll('[data-attribute]'));
+  var center = 210;
+  var radius = 135;
+  var sides = 5;
+
+  function svgElement(tag, attrs) {
+    var element = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.keys(attrs).forEach(function(key) { element.setAttribute(key, attrs[key]); });
+    return element;
+  }
+
+  function point(index, value) {
+    var angle = -Math.PI / 2 + index * (Math.PI * 2 / sides);
+    var distance = radius * value / 100;
+    return { x: center + Math.cos(angle) * distance, y: center + Math.sin(angle) * distance };
+  }
+
+  function drawRadar() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    for (var level = 20; level <= 100; level += 20) {
+      var gridPoints = [];
+      for (var i = 0; i < sides; i++) {
+        var gridPoint = point(i, level);
+        gridPoints.push(gridPoint.x + ',' + gridPoint.y);
+      }
+      svg.appendChild(svgElement('polygon', { points: gridPoints.join(' '), class: 'overall-grid' }));
+    }
+
+    for (var axis = 0; axis < sides; axis++) {
+      var end = point(axis, 100);
+      svg.appendChild(svgElement('line', { x1: center, y1: center, x2: end.x, y2: end.y, class: 'overall-axis' }));
+    }
+
+    var values = inputs.map(function(input) { return Number(input.value); });
+    var playerPoints = values.map(function(value, index) {
+      var p = point(index, value);
+      return p.x + ',' + p.y;
+    });
+    svg.appendChild(svgElement('polygon', { points: playerPoints.join(' '), class: 'overall-player-area' }));
+
+    values.forEach(function(value, index) {
+      var p = point(index, value);
+      svg.appendChild(svgElement('circle', { cx: p.x, cy: p.y, r: 5, class: 'overall-player-point' }));
+      var labelPoint = point(index, 100);
+      var labelRadius = radius + 32;
+      var angle = -Math.PI / 2 + index * (Math.PI * 2 / sides);
+      var label = svgElement('text', {
+        x: center + Math.cos(angle) * labelRadius,
+        y: center + Math.sin(angle) * labelRadius,
+        class: 'overall-radar-label'
+      });
+      label.textContent = inputs[index].dataset.label;
+      svg.appendChild(label);
+    });
+
+    var total = 0;
+    inputs.forEach(function(input) {
+      var value = Number(input.value);
+      total += value;
+      form.querySelector('[data-stat-value="' + input.dataset.attribute + '"]').textContent = value;
+    });
+    form.querySelector('[data-overall-value]').textContent = Math.round(total / inputs.length);
+  }
+
+  inputs.forEach(function(input) { input.addEventListener('input', drawRadar); });
+  drawRadar();
 });
 </script>
 {% endblock %}

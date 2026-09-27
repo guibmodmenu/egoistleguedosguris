@@ -1,8 +1,9 @@
 import os
 import secrets
 from flask import Flask, session, render_template, request
+from sqlalchemy import text
 from config import DATABASE_URI, SECRET_KEY, MAX_UPLOAD_SIZE, ALLOWED_EXTENSIONS
-from models import db
+from models import db, Season, DEFAULT_INITIAL_MARKET_VALUE, LEGACY_INITIAL_MARKET_VALUE
 
 
 def create_app():
@@ -79,11 +80,27 @@ def create_app():
         return render_template('errors/404.html'), 403
 
     with app.app_context():
+        # Fail startup if the configured database cannot be reached; never fall back
+        # to a local database in production. create_all adds missing tables only.
+        with db.engine.connect() as connection:
+            connection.execute(text('SELECT 1'))
         db.create_all()
+        # Move the previous hard-coded default for new signups only. Existing
+        # SeasonPlayer market values and their histories are intentionally kept.
+        migrated_seasons = Season.query.filter_by(
+            status='ACTIVE', initial_market_value=LEGACY_INITIAL_MARKET_VALUE
+        ).update(
+            {'initial_market_value': DEFAULT_INITIAL_MARKET_VALUE},
+            synchronize_session=False,
+        )
+        if migrated_seasons:
+            db.session.commit()
 
     return app
 
 
+app = create_app()
+
+
 if __name__ == '__main__':
-    app = create_app()
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

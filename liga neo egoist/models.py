@@ -2,6 +2,8 @@ from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+DEFAULT_INITIAL_MARKET_VALUE = 10_000_000
+LEGACY_INITIAL_MARKET_VALUE = 50_000_000
 
 
 def utcnow():
@@ -77,7 +79,7 @@ class Season(db.Model):
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
     status = db.Column(db.String(16), nullable=False, default='UPCOMING')
-    initial_market_value = db.Column(db.BigInteger, nullable=False, default=50000000)
+    initial_market_value = db.Column(db.BigInteger, nullable=False, default=DEFAULT_INITIAL_MARKET_VALUE)
     created_at = db.Column(db.DateTime, nullable=False, default=utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)
 
@@ -127,6 +129,32 @@ class SeasonPlayer(db.Model):
     club = db.relationship('Club', backref='season_players')
 
     __table_args__ = (db.UniqueConstraint('season_id', 'player_id'),)
+
+
+class SeasonPlayerAttributes(db.Model):
+    __tablename__ = 'season_player_attributes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    season_player_id = db.Column(
+        db.Integer, db.ForeignKey('season_players.id'), nullable=False, unique=True
+    )
+    defense = db.Column(db.Integer, nullable=False, default=50)
+    passing = db.Column(db.Integer, nullable=False, default=50)
+    physical = db.Column(db.Integer, nullable=False, default=50)
+    speed = db.Column(db.Integer, nullable=False, default=50)
+    attack = db.Column(db.Integer, nullable=False, default=50)
+
+    season_player = db.relationship(
+        'SeasonPlayer', backref=db.backref('attributes', uselist=False)
+    )
+
+    __table_args__ = (
+        db.CheckConstraint('defense BETWEEN 0 AND 100', name='ck_player_attributes_defense'),
+        db.CheckConstraint('passing BETWEEN 0 AND 100', name='ck_player_attributes_passing'),
+        db.CheckConstraint('physical BETWEEN 0 AND 100', name='ck_player_attributes_physical'),
+        db.CheckConstraint('speed BETWEEN 0 AND 100', name='ck_player_attributes_speed'),
+        db.CheckConstraint('attack BETWEEN 0 AND 100', name='ck_player_attributes_attack'),
+    )
 
 
 class Match(db.Model):

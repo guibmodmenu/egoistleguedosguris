@@ -125,7 +125,13 @@ def rank():
             player = db.session.get(Player, sp.player_id)
             club = db.session.get(Club, sp.club_id)
             if player and club:
-                players_data.append({'player': player, 'season_player': sp, 'club': club})
+                latest_value_change = PlayerValueHistory.query.filter_by(
+                    season_player_id=sp.id
+                ).order_by(PlayerValueHistory.id.desc()).first()
+                players_data.append({
+                    'player': player, 'season_player': sp, 'club': club,
+                    'value_change': latest_value_change,
+                })
 
         sort_keys = {'goals': 'goals', 'assists': 'assists', 'rating': 'rating_average'}
         key = sort_keys.get(sort_by, 'current_market_value')

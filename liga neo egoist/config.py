@@ -3,15 +3,35 @@ import secrets
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-# Database: PostgreSQL in production, SQLite locally
-DATABASE_URI = os.environ.get('DATABASE_URL')
+# Use PostgreSQL in production; SQLite is a local-development fallback only.
+_environment_names = ('APP_ENV', 'ENVIRONMENT', 'FLASK_ENV', 'DEPLOYMENT_ENV')
+IS_PRODUCTION = (
+    any(os.environ.get(name, '').strip().lower() in {'production', 'prod'}
+        for name in _environment_names)
+    or os.environ.get('RENDER', '').strip().lower() in {'true', '1', 'yes'}
+    or bool(os.environ.get('RENDER_SERVICE_ID', '').strip())
+)
+
+DATABASE_URI = os.environ.get('DATABASE_URL', '').strip()
 if not DATABASE_URI:
+    if IS_PRODUCTION:
+        raise RuntimeError(
+            'DATABASE_URL is required in production. Configure the Render PostgreSQL '
+            'database connection; SQLite fallback is disabled.'
+        )
     DATABASE_PATH = os.path.join(BASE_DIR, 'database', 'league.db')
     DATABASE_URI = f'sqlite:///{DATABASE_PATH}'
 
-# Fix Render PostgreSQL URI (postgres:// -> postgresql://)
-if DATABASE_URI and DATABASE_URI.startswith('postgres://'):
+# Normalize PostgreSQL URL schemes used by hosting providers.
+if DATABASE_URI.startswith('postgres://'):
     DATABASE_URI = DATABASE_URI.replace('postgres://', 'postgresql://', 1)
+elif DATABASE_URI.startswith('postgresql+psycopg://'):
+    DATABASE_URI = DATABASE_URI.replace('postgresql+psycopg://', 'postgresql+psycopg2://', 1)
+
+if IS_PRODUCTION and not DATABASE_URI.startswith(('postgresql://', 'postgresql+psycopg2://')):
+    raise RuntimeError(
+        'Production must use PostgreSQL through DATABASE_URL; a SQLite database URL is not allowed.'
+    )
 
 # Secret key
 _secret = os.environ.get('SECRET_KEY')

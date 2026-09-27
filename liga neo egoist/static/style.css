@@ -644,3 +644,246 @@ select.form-input {
   .score-input { min-height: 48px; font-size: 24px; }
   .form-input { min-height: 44px; font-size: 14px; }
 }
+
+
+/* Ranking em cartões geométricos inspirados no painel Blue Lock */
+.rank-page { max-width: 1120px; }
+.rank-season-name { color: var(--text-dim); }
+.rank-sort-tabs { margin-bottom: 18px; }
+.rank-list { display: grid; gap: 17px; }
+.rank-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 96px 120px minmax(170px, 1fr) 126px 104px;
+  grid-template-rows: 60px 78px;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 7px;
+  min-height: 164px;
+  padding: 12px 12px 12px 16px;
+  overflow: hidden;
+  color: var(--text);
+  background: linear-gradient(110deg, rgba(59,130,246,.12), var(--bg-card-solid) 42%);
+  border: 2px solid var(--border);
+  clip-path: polygon(5% 0, 100% 0, 100% 82%, 95% 100%, 0 100%, 0 19%);
+  filter: drop-shadow(0 5px 12px rgba(0,0,0,.24));
+}
+.rank-card::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  left: 4px;
+  top: 28%;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg-card-solid);
+}
+.rank-card.rank-top-1 { border-color: var(--accent); }
+.rank-card.rank-top-2 { border-color: rgba(96,165,250,.72); }
+.rank-card.rank-top-3 { border-color: rgba(59,130,246,.5); }
+.rank-panel {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: white;
+  background: repeating-linear-gradient(0deg, #1e40af 0, #1e40af 3px, #2563eb 4px, #1d4ed8 5px);
+  border: 2px solid #0b1220;
+  clip-path: polygon(24% 0, 100% 0, 100% 100%, 0 100%, 0 27%);
+  box-shadow: inset 0 0 0 4px rgba(255,255,255,.1);
+}
+.rank-top-2 .rank-panel { background: repeating-linear-gradient(0deg, #1d4ed8 0, #1d4ed8 3px, #3b82f6 4px, #2563eb 5px); }
+.rank-top-3 .rank-panel { background: repeating-linear-gradient(0deg, #1e3a8a 0, #1e3a8a 3px, #2563eb 4px, #1d4ed8 5px); }
+.rank-panel::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 7px;
+  height: 7px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: white;
+}
+.rank-caption { margin-bottom: 3px; text-align: center; font: 800 12px/.95 Arial, sans-serif; letter-spacing: .03em; }
+.rank-number { font: 700 clamp(42px, 5vw, 68px)/.95 ui-monospace, 'Courier New', monospace; letter-spacing: -.09em; text-shadow: 0 1px 5px rgba(0,0,0,.3); }
+.rank-bid-tag {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  width: 100%;
+  max-width: 118px;
+  padding: 7px 9px;
+  color: var(--text);
+  background: var(--bg-card-solid);
+  border: 1.5px solid var(--accent);
+  box-shadow: 4px 0 0 -2px var(--bg-card-solid), 6px 0 0 -2px var(--accent);
+  text-align: center;
+  font-size: 21px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .12em;
+}
+.rank-player-copy {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 56px;
+  padding: 7px 10px;
+  background: rgba(20,21,27,.95);
+  border: 1.5px solid var(--border);
+  clip-path: polygon(7% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+  text-align: center;
+}
+.rank-player-name { overflow: hidden; color: var(--text); font-size: clamp(17px, 2.3vw, 25px); font-weight: 900; line-height: 1.05; text-overflow: ellipsis; white-space: nowrap; }
+.rank-player-name:hover { color: var(--accent-light); text-decoration: none; }
+.rank-player-meta { overflow: hidden; margin-top: 4px; color: var(--text-dim); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.rank-price-panel {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  padding: 4px 12px 5px;
+  overflow: hidden;
+  color: var(--text);
+  background: #0c111d;
+  border: 1.5px solid var(--accent-dark);
+  clip-path: polygon(0 0, 100% 0, 100% 82%, 96% 100%, 0 100%);
+  white-space: nowrap;
+}
+.rank-price-label { color: var(--text-dim); font-size: 8px; font-weight: 800; letter-spacing: .15em; }
+.rank-price { display: flex; align-items: baseline; gap: 5px; min-width: 0; color: var(--text); font: 700 clamp(27px, 3vw, 35px)/1 ui-monospace, 'Courier New', monospace; letter-spacing: -.07em; font-variant-numeric: tabular-nums; }
+.rank-price > span { color: var(--accent-light); font: 400 clamp(28px, 3.2vw, 37px)/1 Georgia, serif; }
+.rank-price small { color: var(--accent-light); font: 700 .48em/1 Arial, sans-serif; letter-spacing: .04em; }
+.rank-player-stats { overflow: hidden; margin-top: 3px; color: var(--text-muted); font-size: 9px; text-overflow: ellipsis; }
+.rank-portrait-frame {
+  grid-column: 4;
+  grid-row: 1 / 3;
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  width: min(100%, 126px);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  padding: 5px;
+  color: var(--accent-light);
+  background: var(--accent-dark);
+  border: 2px solid var(--accent);
+  clip-path: polygon(50% 0, 99% 30%, 84% 91%, 15% 91%, 1% 30%);
+  text-decoration: none;
+}
+.rank-portrait-frame img, .rank-portrait-fallback { display: grid; place-items: center; width: 100%; height: 100%; color: var(--text); background: var(--bg-card-solid); clip-path: polygon(50% 0, 99% 30%, 84% 91%, 15% 91%, 1% 30%); }
+.rank-portrait-frame img { object-fit: cover; object-position: center; filter: grayscale(1) contrast(1.08); transition: filter .2s, transform .2s; }
+.rank-portrait-frame:hover img { filter: grayscale(.15) contrast(1.04); transform: scale(1.04); }
+.rank-portrait-fallback { font-size: 24px; font-weight: 900; text-transform: uppercase; }
+.rank-trend {
+  grid-column: 5;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  text-align: center;
+}
+.rank-trend.is-up { color: var(--success); }
+.rank-trend.is-down { color: var(--danger); }
+.rank-trend-label { color: currentColor; font-size: 19px; font-weight: 900; letter-spacing: .08em; }
+.rank-trend-arrow { position: relative; display: block; width: 0; height: 42px; border-left: 5px solid transparent; border-right: 5px solid transparent; }
+.rank-trend.is-up .rank-trend-arrow::before { content: ''; position: absolute; left: -16px; top: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-bottom: 20px solid var(--success); }
+.rank-trend.is-up .rank-trend-arrow::after { content: ''; position: absolute; left: -6px; top: 17px; width: 12px; height: 26px; background: var(--success); }
+.rank-trend.is-down .rank-trend-arrow::before { content: ''; position: absolute; left: -16px; bottom: -1px; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 20px solid var(--danger); }
+.rank-trend.is-down .rank-trend-arrow::after { content: ''; position: absolute; left: -6px; top: 0; width: 12px; height: 26px; background: var(--danger); }
+.rank-trend strong { color: currentColor; font-size: 13px; font-weight: 900; white-space: nowrap; }
+.rank-trend small { color: currentColor; font-size: 10px; font-weight: 700; }
+.rank-trend.empty { visibility: hidden; }
+.rank-list-hint { margin: 10px 5px 0; color: var(--text-dim); font-size: 11px; }
+
+@media (max-width: 760px) {
+  .rank-list { gap: 12px; }
+  .rank-card { grid-template-columns: 74px minmax(68px, .65fr) minmax(104px, 1fr) 76px; grid-template-rows: 53px 64px; column-gap: 8px; row-gap: 6px; min-height: 132px; padding: 9px 9px 9px 12px; }
+  .rank-card.has-trend { grid-template-rows: 53px 64px 26px; min-height: 158px; }
+  .rank-caption { font-size: 10px; }
+  .rank-number { font-size: clamp(40px, 8vw, 56px); }
+  .rank-bid-tag { font-size: 18px; padding: 6px 4px; }
+  .rank-player-copy { min-height: 49px; padding: 6px 5px; }
+  .rank-player-name { font-size: clamp(16px, 4vw, 22px); }
+  .rank-player-meta { font-size: 8px; }
+  .rank-price-panel { grid-column: 2 / 4; grid-row: 2; padding: 3px 8px; }
+  .rank-price-label { font-size: 7px; }
+  .rank-price { font-size: clamp(24px, 5vw, 34px); }
+  .rank-price > span { font-size: clamp(25px, 5vw, 36px); }
+  .rank-player-stats { font-size: 8px; }
+  .rank-portrait-frame { grid-column: 4; grid-row: 1 / 3; width: 75px; padding: 4px; }
+  .rank-trend { grid-column: 1 / 5; grid-row: 3; flex-direction: row; justify-content: flex-end; gap: 8px; min-height: 24px; }
+  .rank-trend-label { font-size: 15px; }
+  .rank-trend-arrow { flex: 0 0 18px; width: 18px; height: 22px; margin: 0; border: 0; transform: none; }
+  .rank-trend.is-up .rank-trend-arrow::before { left: 1px; top: 0; border-left-width: 8px; border-right-width: 8px; border-bottom-width: 10px; }
+  .rank-trend.is-up .rank-trend-arrow::after { left: 6px; top: 8px; width: 6px; height: 12px; }
+  .rank-trend.is-down .rank-trend-arrow::before { left: 1px; bottom: 0; border-left-width: 8px; border-right-width: 8px; border-top-width: 10px; }
+  .rank-trend.is-down .rank-trend-arrow::after { left: 6px; top: 0; width: 6px; height: 12px; }
+  .rank-trend strong { font-size: 12px; }
+  .rank-trend small { font-size: 9px; }
+  .rank-card:not(.has-trend) .rank-trend { display: none; }
+}
+@media (max-width: 420px) {
+  .rank-card { grid-template-columns: 56px minmax(46px, .62fr) minmax(80px, 1fr) 54px; column-gap: 5px; padding: 7px 7px 7px 9px; }
+  .rank-number { font-size: 40px; }
+  .rank-bid-tag { font-size: 15px; letter-spacing: .07em; }
+  .rank-player-name { font-size: 16px; }
+  .rank-player-meta { font-size: 7px; }
+  .rank-portrait-frame { width: 54px; padding: 3px; }
+  .rank-price-panel { padding: 3px 6px; }
+  .rank-price { gap: 3px; font-size: 22px; }
+  .rank-price > span { font-size: 24px; }
+  .rank-player-stats { font-size: 7px; }
+}
+
+
+/* Editor de overall por pentágono no painel administrativo */
+.overall-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 18px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: rgba(7,8,11,0.55);
+}
+.overall-radar-wrap { display: flex; justify-content: center; align-items: center; min-width: 0; }
+.overall-radar { display: block; width: 100%; max-width: 390px; height: auto; overflow: visible; }
+.overall-grid { fill: none; stroke: var(--border); stroke-width: 1; }
+.overall-axis { stroke: var(--border); stroke-width: 1; }
+.overall-player-area { fill: rgba(239,68,68,0.24); stroke: var(--danger); stroke-width: 3; stroke-linejoin: round; transition: all 0.15s ease; }
+.overall-player-point { fill: var(--danger); stroke: white; stroke-width: 1.5; }
+.overall-radar-label { fill: var(--text-muted); font-size: 11px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+.overall-controls { padding: 15px; background: var(--bg-card-solid); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.overall-stat { margin-bottom: 12px; }
+.overall-stat-header { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.overall-stat-header label { color: var(--text-muted); font-size: 11px; font-weight: 700; }
+.overall-stat-header strong { color: var(--text); font-size: 12px; }
+.overall-stat input[type="range"] { width: 100%; accent-color: var(--danger); cursor: pointer; }
+.overall-result { display: flex; align-items: center; justify-content: space-between; margin: 13px 0 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.overall-result span { color: var(--text-dim); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; }
+.overall-result strong { color: var(--danger); font-size: 30px; font-weight: 900; line-height: 1; }
+.overall-save { min-height: 40px; font-size: 13px; }
+@media (max-width: 700px) {
+  .overall-editor-grid { grid-template-columns: 1fr; gap: 8px; padding: 10px; }
+  .overall-radar { max-width: 330px; }
+  .overall-controls { padding: 12px; }
+}
